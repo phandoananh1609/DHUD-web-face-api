@@ -1,6 +1,4 @@
-const video = document.createElement('video');
-video.src = '/head-pose-face-detection-male.mp4';
-
+const video = document.getElementById('video');
 
 Promise.all([
   faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
@@ -9,6 +7,7 @@ Promise.all([
 ]).then(startVideo);
 
 function startVideo() {
+  video.src = './video.mp4';
   video.addEventListener('loadedmetadata', async () => {
     const canvas = faceapi.createCanvasFromMedia(video);
     document.body.append(canvas);

@@ -7,7 +7,7 @@ Promise.all([
 ]).then(startVideo);
 
 function startVideo() {
-  video.src = './video.mp4';
+  video.src = 'video.mp4';
   video.addEventListener('loadedmetadata', async () => {
     const canvas = faceapi.createCanvasFromMedia(video);
     document.body.append(canvas);

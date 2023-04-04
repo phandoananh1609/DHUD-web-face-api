@@ -1,41 +1,25 @@
-const video1 = document.getElementById('video1');
-video1.load();
-video1.play();
-
-const video2 = document.getElementById('video2');
-const canvas = document.createElement('canvas');
-const ctx = canvas.getContext('2d');
-document.querySelector('.right').appendChild(canvas);
+const video = document.getElementById('video');
 
 Promise.all([
   faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
-  faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
   faceapi.nets.faceRecognitionNet.loadFromUri('/models'),
   faceapi.nets.faceExpressionNet.loadFromUri('/models')
 ]).then(startVideo);
 
 function startVideo() {
-  navigator.getUserMedia(
-    { video: {} },
-    stream => video2.srcObject = stream,
-    err => console.error(err)
-  );
+  video.src = 'video.mp4';
+  video.addEventListener('loadedmetadata', async () => {
+    const canvas = faceapi.createCanvasFromMedia(video);
+    document.body.append(canvas);
+    const displaySize = { width: video.videoWidth, height: video.videoHeight };
+    faceapi.matchDimensions(canvas, displaySize);
+    setInterval(async () => {
+      const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceExpressions();
+      const resizedDetections = faceapi.resizeResults(detections, displaySize);
+      canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+      faceapi.draw.drawDetections(canvas, resizedDetections);
+      faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
+      faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
+    }, 100);
+  });
 }
-
-video2.addEventListener('play', () => {
-  const videoWidth = video2.videoWidth;
-  const videoHeight = video2.videoHeight;
-  canvas.width = videoWidth;
-  canvas.height = videoHeight;
-
-  setInterval(async () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const detections = await faceapi.detectAllFaces(video2, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceExpressions();
-    const resizedDetections = faceapi.resizeResults(detections, { width: videoWidth, height: videoHeight });
-    resizedDetections.forEach(detection => {
-      const box = detection.detection.box;
-      const drawBox = new faceapi.draw.DrawBox(box, { label: 'Face' });
-      drawBox.draw(canvas);
-    });
-  }, 100);
-});
